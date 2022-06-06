@@ -1,0 +1,13 @@
+services:
+  app1:
+    image: patelp99/a1:app1
+    container_name: app1
+    ports:
+      - "5000:5000"
+    depends_on:
+      - app2
+  app2:
+    image: patelp99/a1:app2
+    container_name: app2
+    volumes:
+      - ./:/usr/app/build/temp
