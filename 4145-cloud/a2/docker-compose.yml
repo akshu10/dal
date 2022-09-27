@@ -1,0 +1,6 @@
+services:
+  app1:
+    image: patelp99/a2:ec2
+    container_name: app1
+    ports:
+      - "8080:8080"
