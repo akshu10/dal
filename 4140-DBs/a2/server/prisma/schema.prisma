@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model client471 {
+  id471                   Int        @id(map: "client_id_index471") @default(autoincrement())
+  client_city471          String     @db.VarChar(50)
+  cents_on_order471       Int
+  client_status471        String
+  client_name471          String     @db.VarChar(50)
+  client_comp_password471 String
+  cents_owed471           Int
+  client_address471       String
+  client_phone471         String     @db.VarChar(50)
+  client_country471       String     @db.VarChar(50)
+  client_postal471        String     @db.VarChar(50)
+  order471                order471[]
+}
+
+model line471 {
+  po_no471            String   @db.VarChar(50)
+  line_num471         Int      @default(autoincrement())
+  part_no471          String   @db.VarChar(50)
+  part_price_cents471 Int?
+  quantity471         Int?
+  order471            order471 @relation(fields: [po_no471], references: [po_no471], onDelete: NoAction, onUpdate: NoAction, map: "fk_2_1")
+  part471             part471  @relation(fields: [part_no471], references: [part_no471], onDelete: NoAction, onUpdate: NoAction, map: "fk_3")
+
+  @@id([po_no471, line_num471], map: "line_pkey471")
+  @@index([part_no471], map: "part_no_fk_index471")
+  @@index([po_no471], map: "purchase_number_fk_index471")
+}
+
+model order471 {
+  po_no471        String    @id(map: "purchase_number_index471") @db.VarChar(50)
+  client_id471    Int
+  status471       String    @db.VarChar(50)
+  request_date471 DateTime? @db.Timestamp(6)
+  client471       client471 @relation(fields: [client_id471], references: [id471], onDelete: NoAction, onUpdate: NoAction, map: "fk_2")
+  line471         line471[]
+
+  @@index([client_id471], map: "client_id_fk_index471")
+}
+
+model part471 {
+  part_no471             String    @id(map: "part_number_index471") @db.VarChar(50)
+  description471         String?
+  qoh471                 Int
+  name471                String
+  current_price_cents471 Int
+  line471                line471[]
+}
