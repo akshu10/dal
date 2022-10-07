@@ -89,6 +89,8 @@ app.post("/order", async (req: Request, res: Response) => {
 
     if (response.error) {
       res.status(400).json({ error: response.error });
+
+      return;
     }
 
     if (data) {

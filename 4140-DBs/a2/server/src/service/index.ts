@@ -40,13 +40,17 @@ export interface CreateOrderError {
 
 const checkPartQuantity = async (
   items: CreateOrderItems[]
-): Promise<boolean> => {
+): Promise<boolean | CreateOrderError> => {
   try {
     if (items.length < 0) return false;
 
     let valid = true;
     for (const item of items) {
-      if (!valid) return false;
+      if (!valid)
+        return {
+          error:
+            "Cannot create order. One of the lineItems contains more quantity than in stock",
+        };
 
       const { data, error } = await supabase
         .from("part471")
@@ -58,12 +62,11 @@ const checkPartQuantity = async (
 
     return valid;
   } catch (error) {
-    console.log(error);
-    return false;
+    return { error: (error as Error).message };
   }
 };
 
-const generateUniqueOrderId = async (): Promise<string> => {
+const generateUniqueOrderId = async (): Promise<string | CreateOrderError> => {
   try {
     /**
      * Find Unique purchaseOrderId
@@ -85,8 +88,25 @@ const generateUniqueOrderId = async (): Promise<string> => {
 
     return purchaseOrderId;
   } catch (error) {
-    console.log(error);
-    return "";
+    return { error: (error as Error).message };
+  }
+};
+
+const verifyClient = async (
+  clientId471: number
+): Promise<boolean | CreateOrderError> => {
+  try {
+    const { data, count } = await supabase
+      .from("client471")
+      .select("*", { count: "exact" })
+      .match({ id471: clientId471 });
+
+    if (count === null || count <= 0)
+      return { error: "Client with the provided ID does not exist" };
+
+    return true;
+  } catch (error) {
+    return { error: (error as Error).message };
   }
 };
 
@@ -96,14 +116,23 @@ const createOrder = async (
   try {
     const proceed = await checkPartQuantity(orderData.lineItems);
 
-    if (!proceed) {
-      return {
-        error:
-          "Cannot create order. One of the lineItems contains more quantity than in stock",
-      };
+    if ((proceed as CreateOrderError).error) {
+      return proceed as CreateOrderError;
     }
 
-    const orderId = await generateUniqueOrderId();
+    const orderIdResponse = await generateUniqueOrderId();
+
+    if ((orderIdResponse as CreateOrderError).error) {
+      return orderIdResponse as CreateOrderError;
+    }
+
+    const response = await verifyClient(orderData.clientId);
+
+    console.log(response);
+
+    if ((response as CreateOrderError).error) {
+      return response as CreateOrderError;
+    }
 
     return true;
   } catch (error) {
