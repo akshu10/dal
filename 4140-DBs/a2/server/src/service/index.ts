@@ -19,8 +19,8 @@ interface Line471 {
   lineNum471: number;
   partNo471: string;
   partPriceCents471: number;
-  qunatityOrdered471: number;
-  priceOrdered471: string;
+  quantityOrdered471: number;
+  priceOrdered471: number;
 }
 
 export interface CreateOrderItems {
@@ -38,29 +38,38 @@ export interface CreateOrderError {
   error: string;
 }
 
-const checkPartQuantity = async (
+const validatePartData = async (
   items: CreateOrderItems[]
 ): Promise<boolean | CreateOrderError> => {
   try {
     if (items.length < 0) return false;
 
-    let valid = true;
+    let validQuantity = true;
+    let validPrice = true;
     for (const item of items) {
-      if (!valid)
+      if (!validQuantity || !validPrice) {
         return {
           error:
-            "Cannot create order. One of the lineItems contains more quantity than in stock",
+            "Cannot create order. One of the lineItems contains more quantity than in stock or incorrect price",
         };
+      }
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("part471")
         .select()
         .match({ part_no471: item.partNo471 });
 
-      valid = data?.[0].qoh471 > item.quantityOrdered471;
+      validQuantity = data?.[0].qoh471 >= item.quantityOrdered471;
+      validPrice = data?.[0].current_price_cents471 === item.partPriceCents471;
     }
 
-    return valid;
+    console.log(validPrice, validQuantity);
+    return validQuantity && validPrice
+      ? true
+      : {
+          error:
+            "Cannot create order. One of the lineItems contains more quantity than in stock or incorrect price",
+        };
   } catch (error) {
     return { error: (error as Error).message };
   }
@@ -114,7 +123,7 @@ const createOrder = async (
   orderData: CreateOrderBody
 ): Promise<boolean | CreateOrderError> => {
   try {
-    const proceed = await checkPartQuantity(orderData.lineItems);
+    const proceed = await validatePartData(orderData.lineItems);
 
     if ((proceed as CreateOrderError).error) {
       return proceed as CreateOrderError;
@@ -134,6 +143,22 @@ const createOrder = async (
       return response as CreateOrderError;
     }
 
+    // Generate price_ordered471 for each line item
+    const line: Line471[] = orderData.lineItems.map((item, index) => {
+      return {
+        poNo471: orderIdResponse as string,
+        lineNum471: index + 1,
+        partNo471: item.partNo471,
+        partPriceCents471: item.partPriceCents471,
+        quantityOrdered471: item.quantityOrdered471,
+        priceOrdered471: item.quantityOrdered471 * item.partPriceCents471,
+      };
+    });
+
+    console.log(line);
+
+    // TODO Insert everything from `line` into DB and update `part471`
+    // to reflect reduction of quantity
     return true;
   } catch (error) {
     console.log(error);
@@ -220,7 +245,7 @@ const getLines = async (
         poNo471: line.po_no471,
         lineNum471: line.line_num471,
         partPriceCents471: line.part_price_cents471,
-        qunatityOrdered471: line.quantity_ordered471,
+        quantityOrdered471: line.quantity_ordered471,
         priceOrdered471: line.price_ordered471,
       };
     });
