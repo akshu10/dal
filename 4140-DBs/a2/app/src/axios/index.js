@@ -1,9 +1,7 @@
 import Axios from "axios";
 
-const baseURL = "http://localhost:8080";
-
 const axios = Axios.create({
-  baseURL,
+  baseURL: "http://localhost:8080/",
 });
 
 export default axios;
