@@ -39,6 +39,10 @@ export interface CreateOrderError {
   error: string;
 }
 
+/**
+ * Line Validation when creating PO
+ */
+
 const validatePartData = async (
   items: CreateOrderItems[]
 ): Promise<boolean | CreateOrderError> => {
@@ -76,6 +80,9 @@ const validatePartData = async (
   }
 };
 
+/**
+ * Local helper that creates a unique PO ID
+ */
 const generateUniqueOrderId = async (): Promise<string | CreateOrderError> => {
   try {
     /**
@@ -102,6 +109,9 @@ const generateUniqueOrderId = async (): Promise<string | CreateOrderError> => {
   }
 };
 
+/**
+ * Checks if the client with the given clientId exists
+ */
 const verifyClient = async (
   clientId471: number
 ): Promise<boolean | CreateOrderError> => {
@@ -120,6 +130,9 @@ const verifyClient = async (
   }
 };
 
+/**
+ * Create an order for for a client
+ */
 const createOrder = async (
   orderData: CreateOrderBody
 ): Promise<boolean | CreateOrderError> => {
@@ -190,7 +203,11 @@ const getParts = async (): Promise<Part471[] | undefined> => {
   }
 };
 
-const listOrders = async (id: number): Promise<Order471[] | undefined> => {
+/**
+ *
+ * Get Purchase Order given a clientId
+ */
+const getOrders = async (id: number): Promise<Order471[] | undefined> => {
   try {
     const { data, error } = await supabase
       .from("order471")
@@ -214,7 +231,11 @@ const listOrders = async (id: number): Promise<Order471[] | undefined> => {
   }
 };
 
-const getOrders = async (): Promise<Order471[] | undefined> => {
+/**
+ *
+ * Get Orders (all)
+ */
+const listOrders = async (): Promise<Order471[] | undefined> => {
   try {
     const { data, error } = await supabase.from("order471").select();
 
@@ -233,6 +254,10 @@ const getOrders = async (): Promise<Order471[] | undefined> => {
   }
 };
 
+/**
+ *
+ * List Lines given a orderNumber
+ */
 const getLines = async (
   orderNumber: string
 ): Promise<Line471[] | undefined> => {

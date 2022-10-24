@@ -42,7 +42,7 @@ app.get("/order/:id", async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
 
-    const data = await Service.listOrders(Number(id));
+    const data = await Service.getOrders(Number(id));
 
     if (data) {
       res.status(200).json({ data });
@@ -56,7 +56,7 @@ app.get("/order/:id", async (req: Request, res: Response): Promise<void> => {
 
 app.get("/orders", async (req: Request, res: Response): Promise<void> => {
   try {
-    const data = await Service.getOrders();
+    const data = await Service.listOrders();
 
     if (data) {
       res.status(200).json({ data });
