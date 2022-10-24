@@ -11,6 +11,7 @@
     "noImplicitAny": true,
     "moduleResolution": "node",
     "inlineSourceMap": true,
+    "allowJs": true,
     "outDir": "build",
     "baseUrl": ".",
     "typeRoots": ["node_modules/@types"],

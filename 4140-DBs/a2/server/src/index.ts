@@ -1,5 +1,6 @@
 import express, { Request, Response } from "express";
 import * as dotenv from "dotenv";
+import cors from "cors";
 
 import * as Service from "./service";
 
@@ -10,7 +11,9 @@ const PORT = process.env.PORT;
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
+
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/status", (req: Request, res: Response) => {
@@ -22,7 +25,10 @@ app.get("/status", (req: Request, res: Response) => {
  */
 app.get("/parts", async (req: Request, res: Response): Promise<void> => {
   try {
+    console.log("HEre");
     const data = await Service.getParts();
+
+    console.log(data);
 
     res.status(200).json({ data });
   } catch (error) {
@@ -104,5 +110,5 @@ app.post("/order", async (req: Request, res: Response) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Listening on ${PORT}`);
+  console.log(`Listening on PORT:${PORT}`);
 });

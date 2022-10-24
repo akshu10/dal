@@ -5,6 +5,7 @@ interface Part471 {
   description471: string;
   name471: string;
   currentPriceCents471: number;
+  quantityOnHand471: number;
 }
 
 interface Order471 {
@@ -179,6 +180,7 @@ const getParts = async (): Promise<Part471[] | undefined> => {
         description471: part.description471,
         name471: part.name471,
         currentPriceCents471: a,
+        quantityOnHand471: part.qoh471,
       };
     });
 
