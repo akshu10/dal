@@ -9,14 +9,6 @@ import { Link } from "react-router-dom";
 const pages = ["purchase", "orders"];
 
 function ResponsiveAppBar() {
-  const [anchorElNav, setAnchorElNav] = React.useState(null);
-  const [anchorElUser, setAnchorElUser] = React.useState(null);
-
-  const handleNav = () => {
-    setAnchorElNav(null);
-    console.log("Clicked");
-  };
-
   return (
     <AppBar position="static">
       <Container maxWidth="xl">
@@ -25,7 +17,6 @@ function ResponsiveAppBar() {
             {pages.map((page) => (
               <Button
                 key={page}
-                onClick={handleNav}
                 sx={{ my: 2, color: "white", display: "block" }}
               >
                 <Link
