@@ -11,6 +11,10 @@ import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
 import Button from "@mui/material/Button";
+import Alert from "@mui/material/Alert";
+import AlertTitle from "@mui/material/AlertTitle";
+import Stack from "@mui/material/Stack";
+import Grid from "@mui/material/Grid";
 
 import * as Service from "../lib/service";
 
@@ -50,8 +54,9 @@ export default function CustomizedTables() {
   // const [selectedQuantity, setSelectedQuantity] = React.useState(0);
   const [disableQuantityInput, setDisableQuantityInput] = React.useState(true);
   const [disableClientIdInput, setDisableClientIdInput] = React.useState(true);
+  const [showAlert, setShowAlert] = React.useState("none");
 
-  const [cart] = React.useState([]);
+  const [cart, setCart] = React.useState([]);
 
   const handlePartNoOnChange = (event) => {
     const newValue = event.target.value;
@@ -92,15 +97,59 @@ export default function CustomizedTables() {
       }
     }
 
-    cart.push({
-      partNo471: selectedPartNo,
-      price,
-      quantityOrdered471: quantitySelected,
-    });
+    const newArray = [];
 
-    console.log(cart);
+    if (cart.length === 0) {
+      newArray.push({
+        partNo471: selectedPartNo,
+        price,
+        quantityOrdered471: quantitySelected,
+      });
+
+      setCart(newArray);
+      triggerAlert();
+      return;
+    }
+
+    let added = false;
+    if (cart.length > 0) {
+      for (const c of cart) {
+        if (c.partNo471 === selectedPartNo) {
+          const temp =
+            parseInt(c.quantityOrdered471) + parseInt(quantitySelected);
+          c.quantityOrdered471 = temp;
+
+          added = true;
+        }
+        newArray.push(c);
+      }
+    }
+
+    if (!added) {
+      newArray.push({
+        partNo471: selectedPartNo,
+        price,
+        quantityOrdered471: quantitySelected,
+      });
+    }
+
+    setCart(newArray);
+    triggerAlert();
   };
 
+  const triggerAlert = () => {
+    setShowAlert("");
+    setTimeout(() => {
+      setShowAlert("none");
+    }, 3000);
+  };
+
+  const handleOnSubmit = async () => {
+    console.log(cart);
+    const final = { clientId: clientIdSelected, lineItems: cart };
+
+    // await Service.createOrder(final);
+  };
   React.useEffect(() => {
     Service.listParts().then((response) => {
       response.forEach((row) => {
@@ -158,6 +207,24 @@ export default function CustomizedTables() {
         </Table>
       </TableContainer>
 
+      <Grid container justifyContent="center">
+        <Stack
+          sx={{
+            width: "25%",
+            marginTop: "15px",
+            marginBottom: "0px",
+            paddingBottom: "0px",
+          }}
+          spacing={2}
+          display={showAlert}
+        >
+          <Alert severity="success">
+            <AlertTitle style={{ justifyContent: "start" }}>Success</AlertTitle>
+            Part added to cart
+          </Alert>
+        </Stack>
+      </Grid>
+
       <Box
         component="form"
         sx={{
@@ -165,7 +232,7 @@ export default function CustomizedTables() {
         }}
         noValidate
         autoComplete="off"
-        style={{ marginTop: "50px" }}
+        style={{ marginTop: "20px" }}
       >
         <div>
           <TextField
@@ -211,6 +278,8 @@ export default function CustomizedTables() {
           variant="contained"
           style={{ marginLeft: "20px" }}
           color="success"
+          onClick={handleOnSubmit}
+          disabled={cart.length === 0}
         >
           Confirm Order
         </Button>

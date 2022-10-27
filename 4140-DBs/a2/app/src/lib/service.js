@@ -8,4 +8,17 @@ const listParts = async () => {
   return result.data.data;
 };
 
-export { listParts };
+const createOrder = async (body) => {
+  try {
+    console.log("Body", body);
+    const result = await axios.post("http://localhost:8080/orders", body, {
+      headers: { accept: "Application/json" },
+    });
+
+    console.log(result.body);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export { listParts, createOrder };
