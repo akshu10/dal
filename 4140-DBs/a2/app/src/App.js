@@ -5,6 +5,7 @@ import Navbar from "./components/Navbar";
 import Home from "./components/Home";
 import PurchaseScreen from "./components/PurchaseScreen";
 import ClientOrders from "./components/ClientOrders";
+import OrderLines from "./components/OrderLines";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/purchase" element={<PurchaseScreen />} />
         <Route path="/orders" element={<ClientOrders />} />
+        <Route path="/lines" element={<OrderLines />} />
       </Routes>
     </div>
   );

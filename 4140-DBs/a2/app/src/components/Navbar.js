@@ -6,7 +6,7 @@ import Container from "@mui/material/Container";
 import Button from "@mui/material/Button";
 import { Link } from "react-router-dom";
 
-const pages = ["purchase", "orders"];
+const pages = ["purchase", "orders", "lines"];
 
 function CustomAppBar() {
   return (

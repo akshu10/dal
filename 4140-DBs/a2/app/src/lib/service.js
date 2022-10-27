@@ -24,4 +24,12 @@ const getClientOrders = async (clientId) => {
   return result.data.data;
 };
 
-export { listParts, createOrder, getClientOrders };
+const getOrderLines = async (poNo) => {
+  const result = await axios.get(`http://localhost:8080/${poNo}/lines`, {
+    headers: { accept: "Application/json" },
+  });
+
+  return result.data.data;
+};
+
+export { listParts, createOrder, getClientOrders, getOrderLines };
