@@ -74,7 +74,6 @@ export default function PurchaseScreen() {
   };
 
   const resetForm = () => {
-    triggerAlert("success", "Order Created", "Success", 5000);
     setQuantitySelected(0);
     setClientId(0);
 
@@ -166,11 +165,13 @@ export default function PurchaseScreen() {
     const response = await Service.createOrder(final);
 
     if (response.data) {
+      triggerAlert("success", "Order Created", "Success", 5000);
       resetForm();
     }
 
     if (response && response.error) {
       triggerAlert("error", response.error, "Error", 5000);
+      resetForm();
     }
   };
   React.useEffect(() => {
