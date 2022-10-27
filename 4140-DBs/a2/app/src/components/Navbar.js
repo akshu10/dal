@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 
 const pages = ["purchase", "orders"];
 
-function ResponsiveAppBar() {
+function CustomAppBar() {
   return (
     <AppBar position="static">
       <Container maxWidth="xl">
@@ -33,4 +33,4 @@ function ResponsiveAppBar() {
     </AppBar>
   );
 }
-export default ResponsiveAppBar;
+export default CustomAppBar;

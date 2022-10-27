@@ -38,7 +38,7 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
-export default function CustomizedTables() {
+export default function PurchaseScreen() {
   const [rows, setRows] = React.useState([]);
   const [partsNos, setPartNos] = React.useState([]);
   const [selectedPartNo, setSelectedPartNo] = React.useState("");

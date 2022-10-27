@@ -16,4 +16,12 @@ const createOrder = async (body) => {
   return result.data;
 };
 
-export { listParts, createOrder };
+const getClientOrders = async (clientId) => {
+  const result = await axios.get(`http://localhost:8080/orders/${clientId}`, {
+    headers: { accept: "Application/json" },
+  });
+
+  return result.data.data;
+};
+
+export { listParts, createOrder, getClientOrders };
