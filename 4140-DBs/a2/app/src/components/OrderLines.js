@@ -130,6 +130,7 @@ export default function OrderLines() {
                 <StyledTableCell>Line No</StyledTableCell>
                 <StyledTableCell>Part No</StyledTableCell>
                 <StyledTableCell>Quantity Ordered</StyledTableCell>
+                <StyledTableCell>Total Paid</StyledTableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -143,6 +144,7 @@ export default function OrderLines() {
                   </StyledTableCell>
                   <StyledTableCell>{row.partNo471}</StyledTableCell>
                   <StyledTableCell>{row.quantityOrdered471}</StyledTableCell>
+                  <StyledTableCell>{row.priceOrdered471 / 100}</StyledTableCell>
                 </StyledTableRow>
               ))}
             </TableBody>

@@ -73,6 +73,15 @@ export default function PurchaseScreen() {
     setClientId(event.target.value);
   };
 
+  const resetForm = () => {
+    triggerAlert("success", "Order Created", "Success", 5000);
+    setQuantitySelected(0);
+    setClientId(0);
+
+    // Reset Cart State
+    setCart([]);
+  };
+
   const handleQuantityOnChange = (event) => {
     for (const a of rows) {
       if (
@@ -111,7 +120,7 @@ export default function PurchaseScreen() {
       });
 
       setCart(newArray);
-      triggerAlert("success", "Part added to cart", "Success");
+      triggerAlert("success", "Part added to cart", "Success", 5000);
       return;
     }
 
@@ -138,20 +147,17 @@ export default function PurchaseScreen() {
     }
 
     setCart(newArray);
-    triggerAlert("success", "Part added to cart", "Success");
+    triggerAlert("success", "Part added to cart", "Success", 3000);
   };
 
-  const triggerAlert = (alertType, alertText, alertTitle) => {
+  const triggerAlert = (alertType, alertText, alertTitle, timeout) => {
     setToggleAlertTitle(alertTitle);
     setToggleAlertText(alertText);
     setToggleAlertType(alertType);
     setShowAlert("");
-    setTimeout(
-      () => {
-        setShowAlert("none");
-      },
-      alertType === "error" ? 5000 : 3000
-    );
+    setTimeout(() => {
+      setShowAlert("none");
+    }, timeout);
   };
 
   const handleOnSubmit = async () => {
@@ -159,8 +165,12 @@ export default function PurchaseScreen() {
 
     const response = await Service.createOrder(final);
 
+    if (response.data) {
+      resetForm();
+    }
+
     if (response && response.error) {
-      triggerAlert("error", response.error, "Error");
+      triggerAlert("error", response.error, "Error", 5000);
     }
   };
   React.useEffect(() => {
@@ -272,6 +282,7 @@ export default function PurchaseScreen() {
             inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
             helperText={helperText}
             disabled={disableQuantityInput}
+            value={quantitySelected}
           />
           <br></br>
           <TextField
@@ -283,6 +294,7 @@ export default function PurchaseScreen() {
             inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
             helperText={clientIdHelperText}
             disabled={disableClientIdInput}
+            value={clientIdSelected}
           />
         </div>
 
