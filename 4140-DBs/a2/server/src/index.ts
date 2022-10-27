@@ -22,7 +22,7 @@ app.get("/status", (req: Request, res: Response) => {
 });
 
 /**
- * List all parts for sale
+ * List all parts route
  */
 app.get("/parts", async (req: Request, res: Response): Promise<void> => {
   try {
@@ -36,6 +36,9 @@ app.get("/parts", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+/**
+ * Retrieve details about the specific order identified by the id provided
+ */
 app.get("/orders/:id", async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -54,6 +57,9 @@ app.get("/orders/:id", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+/**
+ * Returns a list of all orders
+ */
 app.get("/orders", async (req: Request, res: Response): Promise<void> => {
   try {
     const data = await Service.listOrders();
@@ -70,6 +76,9 @@ app.get("/orders", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+/**
+ * Returns lines for a given order where the order is identified by :orderNumber in the route
+ */
 app.get(
   "/:orderNumber/lines",
   async (req: Request, res: Response): Promise<void> => {
@@ -89,9 +98,22 @@ app.get(
   }
 );
 
+/**
+ * This endpoint is called when a client wants to submit a request to create a Purchase order.
+ * It accepts the following JSON:
+ * {
+ *  clientId: "",
+ *  lineItems: [ 
+ *      {
+ *        "partNo471": "",
+ *        "partPriceCents471": "",
+           "quantityOrdered471": ""
+ *      }
+ *  ]
+ * }
+ */
 app.post("/orders", async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log("REQ BODY", req.body);
     const data = await Service.createOrder(
       req.body as unknown as Service.CreateOrderBody
     );
@@ -115,6 +137,6 @@ app.post("/orders", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-app.listen(PORT, () => {
+app.listen(PORT || 8000, () => {
   console.log(`Listening on PORT:${PORT}`);
 });

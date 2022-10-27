@@ -1,4 +1,3 @@
-import { it } from "node:test";
 import supabase from "../lib/supabase-client";
 
 interface Part471 {
@@ -41,7 +40,7 @@ export interface CreateOrderError {
 }
 
 /**
- * Line Validation when creating PO
+ * Validate the price and quantity for a part that will be on an Order
  */
 
 const validatePartData = async (
@@ -92,7 +91,7 @@ const validatePartData = async (
 };
 
 /**
- * Local helper that creates a unique PO ID
+ * Local helper that generates a unique Purchase Order ID
  */
 const generateUniqueOrderId = async (): Promise<string | CreateOrderError> => {
   try {
@@ -141,7 +140,7 @@ const verifyClient = async (
 };
 
 /**
- * Create an order for for a client
+ * Creates an order for a client and inserts lines and order into respective tables
  */
 const createOrder = async (
   orderData: CreateOrderBody
@@ -178,11 +177,6 @@ const createOrder = async (
         priceOrdered471: item.quantityOrdered471 * item.partPriceCents471 * 100,
       };
     });
-
-    console.log(lineItems, "LINE");
-
-    // TODO Insert everything from `line` into DB and update `part471`
-    // to reflect reduction of quantity
 
     // Insert new Purchase Order
     let result = await supabase.from("order471").insert({
@@ -247,6 +241,9 @@ const createOrder = async (
   }
 };
 
+/**
+ * Return all the parts from the Parts471 table.
+ */
 const getParts = async (): Promise<Part471[] | undefined> => {
   try {
     const { data } = await supabase.from("part471").select();
@@ -271,8 +268,7 @@ const getParts = async (): Promise<Part471[] | undefined> => {
 };
 
 /**
- *
- * Get Purchase Order given a clientId
+ * Retrieves a Purchase Order for the given ClientId
  */
 const getOrders = async (id: number): Promise<Order471[] | undefined> => {
   try {
@@ -299,8 +295,7 @@ const getOrders = async (id: number): Promise<Order471[] | undefined> => {
 };
 
 /**
- *
- * Get Orders (all)
+ * Get all Orders on the Orders471 table
  */
 const listOrders = async (): Promise<Order471[] | undefined> => {
   try {
@@ -322,8 +317,7 @@ const listOrders = async (): Promise<Order471[] | undefined> => {
 };
 
 /**
- *
- * List Lines given a orderNumber
+ * List Lines for the given purchase Order no
  */
 const getLines = async (
   orderNumber: string
