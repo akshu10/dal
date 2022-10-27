@@ -1,3 +1,4 @@
+import { it } from "node:test";
 import supabase from "../lib/supabase-client";
 
 interface Part471 {
@@ -17,7 +18,7 @@ interface Order471 {
 
 interface Line471 {
   poNo471: string;
-  lineNum471: number;
+  lineNum471?: number;
   partNo471: string;
   partPriceCents471: number;
   quantityOrdered471: number;
@@ -103,7 +104,7 @@ const generateUniqueOrderId = async (): Promise<string | CreateOrderError> => {
     do {
       purchaseOrderId = `P000${Math.floor(Math.random() * 100) + 1}`;
       console.log(purchaseOrderId);
-      const { data, count } = await supabase
+      const { count } = await supabase
         .from("order471")
         .select("*", { count: "exact" })
         .like("po_no471", `%${purchaseOrderId}%`);
@@ -125,7 +126,7 @@ const verifyClient = async (
   clientId471: number
 ): Promise<boolean | CreateOrderError> => {
   try {
-    const { data, count } = await supabase
+    const { count } = await supabase
       .from("client471")
       .select("*", { count: "exact" })
       .match({ id471: clientId471 });
@@ -184,8 +185,60 @@ const createOrder = async (
     // to reflect reduction of quantity
 
     // Insert new Purchase Order
+    let result = await supabase.from("order471").insert({
+      po_no471: orderIdResponse,
+      client_id471: orderData.clientId,
+      status471: "Active",
+      request_date471: new Date(),
+    });
+
+    if (result.error) {
+      return { error: "Internal Server Error" };
+    }
     // Insert Lines for each PO
+
+    for (const item of lineItems) {
+      const { data, error } = await supabase.from("line471").insert([
+        {
+          po_no471: item.poNo471,
+          part_no471: item.partNo471,
+          part_price_cents471: item.partPriceCents471 * 100,
+          price_ordered471: item.priceOrdered471,
+          quantity_ordered471: item.quantityOrdered471,
+          line_num471: item.lineNum471,
+        },
+      ]);
+
+      if (error) {
+        return { error: "Internal Server Error" };
+      }
+    }
+
     // Update Part471 to decrease QOH
+    for (const item of lineItems) {
+      const qResult = await supabase
+        .from("part471")
+        .select("qoh471")
+        .ilike("part_no471", `%${item.partNo471}%`);
+
+      if (qResult.error) {
+        return { error: "Internal Server Error" };
+      }
+
+      if (qResult.data && qResult.data?.length > 0) {
+        const updateValue = qResult.data[0].qoh471 - item.quantityOrdered471;
+        const result = await supabase
+          .from("part471")
+          .update({ qoh471: updateValue })
+          .ilike("part_no471", `%${item.partNo471}%`);
+
+        if (result.error) {
+          return { error: "Internal Server Error" };
+        }
+      } else {
+        return { error: "Internal Server Error" };
+      }
+    }
 
     return true;
   } catch (error) {
@@ -196,7 +249,7 @@ const createOrder = async (
 
 const getParts = async (): Promise<Part471[] | undefined> => {
   try {
-    const { data, error } = await supabase.from("part471").select();
+    const { data } = await supabase.from("part471").select();
 
     const result: Part471[] | undefined = data?.map((part) => {
       const n = Number(part.current_price_cents471) / 100;
@@ -223,7 +276,7 @@ const getParts = async (): Promise<Part471[] | undefined> => {
  */
 const getOrders = async (id: number): Promise<Order471[] | undefined> => {
   try {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("order471")
       .select()
       .match({ client_id471: id });
@@ -251,7 +304,7 @@ const getOrders = async (id: number): Promise<Order471[] | undefined> => {
  */
 const listOrders = async (): Promise<Order471[] | undefined> => {
   try {
-    const { data, error } = await supabase.from("order471").select();
+    const { data } = await supabase.from("order471").select();
 
     const result: Order471[] | undefined = data?.map((order) => {
       return {
@@ -276,7 +329,7 @@ const getLines = async (
   orderNumber: string
 ): Promise<Line471[] | undefined> => {
   try {
-    const { data, error } = await supabase.from("line471").select().match({
+    const { data } = await supabase.from("line471").select().match({
       po_no471: orderNumber?.toUpperCase(),
     });
 

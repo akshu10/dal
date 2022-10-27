@@ -32,12 +32,11 @@ app.get("/parts", async (req: Request, res: Response): Promise<void> => {
     return;
   } catch (error) {
     const error2 = error as Error;
-    console.log(error);
     console.log(error2.message);
   }
 });
 
-app.get("/order/:id", async (req: Request, res: Response): Promise<void> => {
+app.get("/orders/:id", async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -72,7 +71,7 @@ app.get("/orders", async (req: Request, res: Response): Promise<void> => {
 });
 
 app.get(
-  "/lines/:orderNumber",
+  "/:orderNumber/lines",
   async (req: Request, res: Response): Promise<void> => {
     try {
       const data = await Service.getLines(req.params.orderNumber);
@@ -105,7 +104,7 @@ app.post("/orders", async (req: Request, res: Response): Promise<void> => {
     }
 
     if (data) {
-      res.status(200).json({ data });
+      res.status(201).json({ data });
       return;
     } else {
       res.status(200).json({ error: "Something went wrong." });
