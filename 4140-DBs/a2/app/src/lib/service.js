@@ -9,16 +9,11 @@ const listParts = async () => {
 };
 
 const createOrder = async (body) => {
-  try {
-    console.log("Body", body);
-    const result = await axios.post("http://localhost:8080/orders", body, {
-      headers: { accept: "Application/json" },
-    });
+  const result = await axios.post("http://localhost:8080/orders", body, {
+    headers: { accept: "Application/json" },
+  });
 
-    console.log(result.body);
-  } catch (error) {
-    console.log(error);
-  }
+  return result.data;
 };
 
 export { listParts, createOrder };
