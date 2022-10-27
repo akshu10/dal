@@ -47,8 +47,6 @@ export default function OrderLines() {
 
   const handleTextInputOnChange = (event) => {
     setOrderNo(event.target.value);
-
-    console.log(orderNo);
   };
 
   const handleOnClick = async () => {
@@ -58,22 +56,26 @@ export default function OrderLines() {
     }
     const response = await Service.getOrderLines(orderNo);
 
-    console.log(response);
+    if (response.length === 0) {
+      triggerAlert(
+        "info",
+        "Purchase order with the given Id does not exist",
+        "Info",
+        5000
+      );
+    }
 
     setRows(response);
   };
 
-  const triggerAlert = (alertType, alertText, alertTitle) => {
+  const triggerAlert = (alertType, alertText, alertTitle, timeout) => {
     setToggleAlertTitle(alertTitle);
     setToggleAlertText(alertText);
     setToggleAlertType(alertType);
     setShowAlert("");
-    setTimeout(
-      () => {
-        setShowAlert("none");
-      },
-      alertType === "error" ? 5000 : 3000
-    );
+    setTimeout(() => {
+      setShowAlert("none");
+    }, timeout);
   };
 
   return (

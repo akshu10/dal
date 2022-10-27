@@ -21,7 +21,11 @@ function Home() {
             The <em>Purchase</em> screen allows you to create a purchase order
           </p>
           <p>
-            The <em>Orders</em> screen allows you to view a the line given a
+            The <em>Orders</em> screen allows you to view the details for a
+            purchase order
+          </p>
+          <p>
+            The <em>Lines</em> screen allows you to view the lines for a
             purchase order
           </p>
         </Typography>

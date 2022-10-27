@@ -155,13 +155,11 @@ export default function PurchaseScreen() {
   };
 
   const handleOnSubmit = async () => {
-    console.log(cart);
     const final = { clientId: clientIdSelected, lineItems: cart };
 
     const response = await Service.createOrder(final);
 
     if (response && response.error) {
-      console.log("UI Error", response.error);
       triggerAlert("error", response.error, "Error");
     }
   };

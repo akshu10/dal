@@ -47,8 +47,6 @@ export default function ClientOrders() {
 
   const handleTextInputOnChange = (event) => {
     setClientId(event.target.value);
-
-    console.log(clientId);
   };
 
   const handleOnClick = async () => {
@@ -57,8 +55,6 @@ export default function ClientOrders() {
       return;
     }
     const response = await Service.getClientOrders(clientId);
-
-    console.log(response);
 
     setRows(response);
   };
