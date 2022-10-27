@@ -47,35 +47,45 @@ const validatePartData = async (
   items: CreateOrderItems[]
 ): Promise<boolean | CreateOrderError> => {
   try {
-    if (items.length < 0) return false;
+    if (items.length <= 0) {
+      return { error: "Order contains no parts" };
+    }
 
     let validQuantity = true;
     let validPrice = true;
+
     for (const item of items) {
+      console.log(item);
       if (!validQuantity || !validPrice) {
         return {
           error:
-            "Cannot create order. One of the lineItems contains more quantity than in stock or incorrect price",
+            "Cannot create order. One of the items on the cart contains more quantity than in stock or incorrect price",
         };
       }
 
       const { data } = await supabase
         .from("part471")
         .select()
-        .match({ part_no471: item.partNo471 });
+        .like("part_no471", `%${item.partNo471}%`);
 
-      validQuantity = data?.[0].qoh471 >= item.quantityOrdered471;
-      validPrice = data?.[0].current_price_cents471 === item.partPriceCents471;
+      validQuantity =
+        data && data.length > 0
+          ? data?.[0].qoh471 > item.quantityOrdered471
+          : false;
+      validPrice =
+        data && data.length > 0
+          ? data?.[0].current_price_cents471 / 100 === item.partPriceCents471
+          : false;
     }
 
-    console.log(validPrice, validQuantity);
     return validQuantity && validPrice
       ? true
       : {
           error:
-            "Cannot create order. One of the lineItems contains more quantity than in stock or incorrect price",
+            "Cannot create order. One of the items on the cart contains more quantity than in stock or incorrect price",
         };
   } catch (error) {
+    console.log((error as Error).message);
     return { error: (error as Error).message };
   }
 };
@@ -88,16 +98,15 @@ const generateUniqueOrderId = async (): Promise<string | CreateOrderError> => {
     /**
      * Find Unique purchaseOrderId
      */
-    let purchaseOrderId = `P000${Math.floor(Math.random() * 100) + 1}`;
+    let purchaseOrderId = "";
     let again = false;
     do {
+      purchaseOrderId = `P000${Math.floor(Math.random() * 100) + 1}`;
       console.log(purchaseOrderId);
       const { data, count } = await supabase
         .from("order471")
         .select("*", { count: "exact" })
-        .match({ po_no471: purchaseOrderId });
-
-      purchaseOrderId = `P000${Math.floor(Math.random() * 100) + 1}`;
+        .like("po_no471", `%${purchaseOrderId}%`);
 
       if (count === null) continue;
       again = count > 0 ? true : false;
@@ -158,21 +167,26 @@ const createOrder = async (
     }
 
     // Generate price_ordered471 for each line item
-    const line: Line471[] = orderData.lineItems.map((item, index) => {
+    const lineItems: Line471[] = orderData.lineItems.map((item, index) => {
       return {
         poNo471: orderIdResponse as string,
         lineNum471: index + 1,
         partNo471: item.partNo471,
         partPriceCents471: item.partPriceCents471,
         quantityOrdered471: item.quantityOrdered471,
-        priceOrdered471: item.quantityOrdered471 * item.partPriceCents471,
+        priceOrdered471: item.quantityOrdered471 * item.partPriceCents471 * 100,
       };
     });
 
-    console.log(line);
+    console.log(lineItems, "LINE");
 
     // TODO Insert everything from `line` into DB and update `part471`
     // to reflect reduction of quantity
+
+    // Insert new Purchase Order
+    // Insert Lines for each PO
+    // Update Part471 to decrease QOH
+
     return true;
   } catch (error) {
     console.log(error);
