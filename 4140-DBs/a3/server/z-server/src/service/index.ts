@@ -1,3 +1,4 @@
+import axios from "axios";
 import supabase from "../../../db/index";
 
 interface Part471 {
@@ -39,6 +40,8 @@ export interface CreateOrderError {
   error: string;
 }
 
+const X_API_URL = "http://localhost:8002";
+const Y_API_URL = "http://localhost:8003";
 /**
  * Validate the price and quantity for a part that will be on an Order
  */
@@ -246,22 +249,33 @@ const createOrder = async (
  */
 const getParts = async (): Promise<Part471[] | undefined> => {
   try {
-    const { data } = await supabase.from("part471").select();
+    const xParts = await axios.get(`${X_API_URL}/parts`);
 
-    const result: Part471[] | undefined = data?.map((part) => {
-      const n = Number(part.current_price_cents471) / 100;
-      const a = parseFloat(n.toFixed(2));
+    const xPartsData = (xParts.data.data as Part471[]) || [];
 
-      return {
-        partNo471: part.part_no471,
-        description471: part.description471,
-        name471: part.name471,
-        currentPriceCents471: a,
-        quantityOnHand471: part.qoh471,
-      };
-    });
+    const yParts = await axios.get(`${Y_API_URL}/parts`);
 
-    return result;
+    const yPartsData = (yParts.data.data as Part471[]) || [];
+
+    const parts: Part471[] = [];
+
+    const set = new Set<string>();
+
+    for (const xPart of xPartsData) {
+      set.add(xPart.partNo471);
+      parts.push(xPart);
+    }
+
+    for (const yPart of yPartsData) {
+      if (set.has(yPart.partNo471)) {
+        continue;
+      } else {
+        set.add(yPart.partNo471);
+        parts.push(yPart);
+      }
+    }
+
+    return parts;
   } catch (error) {
     console.log(error);
   }

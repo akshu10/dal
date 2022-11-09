@@ -64,7 +64,7 @@ const validatePartData = async (
       }
 
       const { data } = await supabase
-        .from("part471")
+        .from("y_part471")
         .select()
         .like("part_no471", `%${item.partNo471}%`);
 
@@ -104,7 +104,7 @@ const generateUniqueOrderId = async (): Promise<string | CreateOrderError> => {
       purchaseOrderId = `P000${Math.floor(Math.random() * 100) + 1}`;
       console.log(purchaseOrderId);
       const { count } = await supabase
-        .from("order471")
+        .from("y_order471")
         .select("*", { count: "exact" })
         .like("po_no471", `%${purchaseOrderId}%`);
 
@@ -126,7 +126,7 @@ const verifyClient = async (
 ): Promise<boolean | CreateOrderError> => {
   try {
     const { count } = await supabase
-      .from("client471")
+      .from("y_client471")
       .select("*", { count: "exact" })
       .match({ id471: clientId471 });
 
@@ -179,7 +179,7 @@ const createOrder = async (
     });
 
     // Insert new Purchase Order
-    let result = await supabase.from("order471").insert({
+    let result = await supabase.from("y_order471").insert({
       po_no471: orderIdResponse,
       client_id471: orderData.clientId,
       status471: "Active",
@@ -192,7 +192,7 @@ const createOrder = async (
     // Insert Lines for each PO
 
     for (const item of lineItems) {
-      const { data, error } = await supabase.from("line471").insert([
+      const { data, error } = await supabase.from("y_line471").insert([
         {
           po_no471: item.poNo471,
           part_no471: item.partNo471,
@@ -211,7 +211,7 @@ const createOrder = async (
     // Update Part471 to decrease QOH
     for (const item of lineItems) {
       const qResult = await supabase
-        .from("part471")
+        .from("y_part471")
         .select("qoh471")
         .ilike("part_no471", `%${item.partNo471}%`);
 
@@ -222,7 +222,7 @@ const createOrder = async (
       if (qResult.data && qResult.data?.length > 0) {
         const updateValue = qResult.data[0].qoh471 - item.quantityOrdered471;
         const result = await supabase
-          .from("part471")
+          .from("y_part471")
           .update({ qoh471: updateValue })
           .ilike("part_no471", `%${item.partNo471}%`);
 
@@ -246,7 +246,7 @@ const createOrder = async (
  */
 const getParts = async (): Promise<Part471[] | undefined> => {
   try {
-    const { data } = await supabase.from("part471").select();
+    const { data } = await supabase.from("y_part471").select();
 
     const result: Part471[] | undefined = data?.map((part) => {
       const n = Number(part.current_price_cents471) / 100;
@@ -273,7 +273,7 @@ const getParts = async (): Promise<Part471[] | undefined> => {
 const getOrders = async (id: number): Promise<Order471[] | undefined> => {
   try {
     const { data } = await supabase
-      .from("order471")
+      .from("y_order471")
       .select()
       .match({ client_id471: id });
 
@@ -299,7 +299,7 @@ const getOrders = async (id: number): Promise<Order471[] | undefined> => {
  */
 const listOrders = async (): Promise<Order471[] | undefined> => {
   try {
-    const { data } = await supabase.from("order471").select();
+    const { data } = await supabase.from("y_order471").select();
 
     const result: Order471[] | undefined = data?.map((order) => {
       return {
@@ -323,7 +323,7 @@ const getLines = async (
   orderNumber: string
 ): Promise<Line471[] | undefined> => {
   try {
-    const { data } = await supabase.from("line471").select().match({
+    const { data } = await supabase.from("y_line471").select().match({
       po_no471: orderNumber?.toUpperCase(),
     });
 
