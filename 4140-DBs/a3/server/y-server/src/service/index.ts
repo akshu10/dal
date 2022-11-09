@@ -1,4 +1,4 @@
-import supabase from "../lib/supabase-client";
+import supabase from "../../../db/index";
 
 interface Part471 {
   partNo471: string;

@@ -7,7 +7,7 @@ import * as Service from "./service";
 // Loads .env
 dotenv.config();
 
-const PORT = process.env.PORT;
+const PORT = process.env.X_PORT;
 
 const app = express();
 
