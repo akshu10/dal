@@ -43,16 +43,17 @@ export default function PurchaseScreen() {
   const [partsNos, setPartNos] = React.useState([]);
   const [selectedPartNo, setSelectedPartNo] = React.useState("");
   const [toggleError, setToggleError] = React.useState(false);
-  const [toggleClientIdError, setToggleClientIdError] = React.useState(false);
+  const [toggleClientIdError] = React.useState(false);
   const [clientIdSelected, setClientId] = React.useState(0);
 
   const [helperText, setHelperText] = React.useState("Input Quantity");
-  const [clientIdHelperText, setClientIdHelperText] =
-    React.useState("Input Client Id");
+  const [clientIdHelperText] = React.useState("Input Client Id");
   const [quantitySelected, setQuantitySelected] = React.useState(0);
+  const [priceInput, setPriceInput] = React.useState(0);
 
-  // const [selectedQuantity, setSelectedQuantity] = React.useState(0);
   const [disableQuantityInput, setDisableQuantityInput] = React.useState(true);
+  const [disablePriceInput, setDisablePriceInput] = React.useState(true);
+
   const [disableClientIdInput, setDisableClientIdInput] = React.useState(true);
   const [showAlert, setShowAlert] = React.useState("none");
 
@@ -74,6 +75,7 @@ export default function PurchaseScreen() {
   };
 
   const resetForm = () => {
+    setPriceInput(0);
     setQuantitySelected(0);
     setClientId(0);
 
@@ -82,40 +84,27 @@ export default function PurchaseScreen() {
   };
 
   const handleQuantityOnChange = (event) => {
-    for (const a of rows) {
-      if (
-        a.partNo471 === selectedPartNo &&
-        event.target.value > a.quantityOnHand471
-      ) {
-        setHelperText("Quantity exceeds the quantity available");
-        setDisableClientIdInput(true);
-        setToggleError(true);
+    setHelperText("Input Quantity");
+    setToggleError(false);
+    setQuantitySelected(event.target.value);
 
-        return;
-      } else {
-        setHelperText("Input Quantity");
-        setDisableClientIdInput(false);
-        setToggleError(false);
-        setQuantitySelected(event.target.value);
-      }
-    }
+    setDisablePriceInput(false);
+  };
+
+  const handlePriceOnChange = (event) => {
+    console.log(event.target.value);
+    setPriceInput(event.target.value);
+    setDisableClientIdInput(false);
   };
 
   const handleAddToCart = () => {
-    let price = "";
-    for (const a of rows) {
-      if (a.partNo471 === selectedPartNo) {
-        price = a.currentPriceCents471;
-      }
-    }
-
     const newArray = [];
 
     if (cart.length === 0) {
       newArray.push({
         partNo471: selectedPartNo,
-        partPriceCents471: price,
         quantityOrdered471: quantitySelected,
+        askingPrice471: parseFloat(priceInput),
       });
 
       setCart(newArray);
@@ -140,12 +129,13 @@ export default function PurchaseScreen() {
     if (!added) {
       newArray.push({
         partNo471: selectedPartNo,
-        partPriceCents471: price,
+        askingPrice471: parseFloat(priceInput),
         quantityOrdered471: quantitySelected,
       });
     }
 
     setCart(newArray);
+    console.log(cart);
     triggerAlert("success", "Part added to cart", "Success", 3000);
   };
 
@@ -205,8 +195,6 @@ export default function PurchaseScreen() {
               <StyledTableCell>Name</StyledTableCell>
               <StyledTableCell align="right">Part No.</StyledTableCell>
               <StyledTableCell align="right">Description</StyledTableCell>
-              <StyledTableCell align="right">Current Price</StyledTableCell>
-              <StyledTableCell align="right">Quantity on Hand</StyledTableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -218,12 +206,6 @@ export default function PurchaseScreen() {
                 <StyledTableCell align="right">{row.partNo471}</StyledTableCell>
                 <StyledTableCell align="right">
                   {row.description471}
-                </StyledTableCell>
-                <StyledTableCell align="right">
-                  {row.currentPriceCents471}
-                </StyledTableCell>
-                <StyledTableCell align="right">
-                  {row.quantityOnHand471}
                 </StyledTableCell>
               </StyledTableRow>
             ))}
@@ -284,6 +266,17 @@ export default function PurchaseScreen() {
             helperText={helperText}
             disabled={disableQuantityInput}
             value={quantitySelected}
+          />
+          <TextField
+            error={toggleError}
+            id="outlined-basic"
+            label="Enter Price"
+            variant="outlined"
+            onChange={handlePriceOnChange}
+            inputProps={{ inputMode: "numeric" }}
+            helperText="Input Price"
+            disabled={disablePriceInput}
+            value={priceInput}
           />
           <br></br>
           <TextField
