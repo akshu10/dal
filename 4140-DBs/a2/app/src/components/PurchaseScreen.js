@@ -299,7 +299,11 @@ export default function PurchaseScreen() {
           />
         </div>
 
-        <Button variant="outlined" onClick={handleAddToCart}>
+        <Button
+          variant="outlined"
+          onClick={handleAddToCart}
+          disabled={toggleError}
+        >
           Add to Cart
         </Button>
         <Button
