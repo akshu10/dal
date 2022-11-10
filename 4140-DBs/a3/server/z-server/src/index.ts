@@ -106,8 +106,8 @@ app.get(
  *  lineItems: [ 
  *      {
  *        "partNo471": "",
- *        "partPriceCents471": "",
-           "quantityOrdered471": ""
+ *        "askingPrice471": "",
+          "quantityOrdered471": ""
  *      }
  *  ]
  * }

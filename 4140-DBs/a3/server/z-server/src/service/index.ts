@@ -17,12 +17,16 @@ interface Order471 {
 }
 
 interface Line471 {
-  poNo471: string;
+  poNo471?: string;
   lineNum471?: number;
   partNo471: string;
   partPriceCents471: number;
   quantityOrdered471: number;
   priceOrdered471: number;
+}
+
+interface ExtendedLineItem471 extends Line471 {
+  company?: string;
 }
 
 export interface CreateOrderItems {
@@ -42,56 +46,6 @@ export interface CreateOrderError {
 
 const X_API_URL = "http://localhost:8002";
 const Y_API_URL = "http://localhost:8003";
-/**
- * Validate the price and quantity for a part that will be on an Order
- */
-
-const validatePartData = async (
-  items: CreateOrderItems[]
-): Promise<boolean | CreateOrderError> => {
-  try {
-    if (items.length <= 0) {
-      return { error: "Order contains no parts" };
-    }
-
-    let validQuantity = true;
-    let validPrice = true;
-
-    for (const item of items) {
-      console.log(item);
-      if (!validQuantity || !validPrice) {
-        return {
-          error:
-            "Cannot create order. One of the items on the cart contains more quantity than in stock or incorrect price",
-        };
-      }
-
-      const { data } = await supabase
-        .from("part471")
-        .select()
-        .like("part_no471", `%${item.partNo471}%`);
-
-      validQuantity =
-        data && data.length > 0
-          ? data?.[0].qoh471 > item.quantityOrdered471
-          : false;
-      validPrice =
-        data && data.length > 0
-          ? data?.[0].current_price_cents471 / 100 === item.partPriceCents471
-          : false;
-    }
-
-    return validQuantity && validPrice
-      ? true
-      : {
-          error:
-            "Cannot create order. One of the items on the cart contains more quantity than in stock or incorrect price",
-        };
-  } catch (error) {
-    console.log((error as Error).message);
-    return { error: (error as Error).message };
-  }
-};
 
 /**
  * Local helper that generates a unique Purchase Order ID
@@ -107,7 +61,7 @@ const generateUniqueOrderId = async (): Promise<string | CreateOrderError> => {
       purchaseOrderId = `P000${Math.floor(Math.random() * 100) + 1}`;
       console.log(purchaseOrderId);
       const { count } = await supabase
-        .from("order471")
+        .from("z_order471")
         .select("*", { count: "exact" })
         .like("po_no471", `%${purchaseOrderId}%`);
 
@@ -129,7 +83,7 @@ const verifyClient = async (
 ): Promise<boolean | CreateOrderError> => {
   try {
     const { count } = await supabase
-      .from("client471")
+      .from("z_client471")
       .select("*", { count: "exact" })
       .match({ id471: clientId471 });
 
@@ -149,17 +103,7 @@ const createOrder = async (
   orderData: CreateOrderBody
 ): Promise<boolean | CreateOrderError> => {
   try {
-    const proceed = await validatePartData(orderData.lineItems);
-
-    if ((proceed as CreateOrderError).error) {
-      return proceed as CreateOrderError;
-    }
-
-    const orderIdResponse = await generateUniqueOrderId();
-
-    if ((orderIdResponse as CreateOrderError).error) {
-      return orderIdResponse as CreateOrderError;
-    }
+    // Check if client exists
 
     const response = await verifyClient(orderData.clientId);
 
@@ -169,20 +113,154 @@ const createOrder = async (
       return response as CreateOrderError;
     }
 
-    // Generate price_ordered471 for each line item
-    const lineItems: Line471[] = orderData.lineItems.map((item, index) => {
-      return {
-        poNo471: orderIdResponse as string,
-        lineNum471: index + 1,
-        partNo471: item.partNo471,
+    let company: string = "";
+    let x_sup: boolean = false;
+    let y_sup: boolean = false;
+    let x_price: number = 0;
+    let y_price: number = 0;
+
+    const xParts = await axios.get(`${X_API_URL}/parts`);
+    const yParts = await axios.get(`${Y_API_URL}/parts`);
+
+    const xPartsData = (xParts.data.data as Part471[]) || [];
+    const yPartsData = (yParts.data.data as Part471[]) || [];
+
+    const newPartsMapping: ExtendedLineItem471[] = [];
+
+    for (const item of orderData.lineItems) {
+      for (const x of xPartsData) {
+        if (x.partNo471 === item.partNo471) {
+          if (item.quantityOrdered471 < x.quantityOnHand471) {
+            x_sup = true;
+            x_price = x.currentPriceCents471;
+          }
+        }
+      }
+
+      for (const y of yPartsData) {
+        if (y.partNo471 === item.partNo471) {
+          if (item.quantityOrdered471 < y.quantityOnHand471) {
+            y_sup = true;
+            y_price = y.currentPriceCents471;
+          }
+        }
+      }
+
+      if (!x_sup && !y_sup && x_price === 0 && y_price === 0) {
+        return {
+          error:
+            "Quantity of one of the parts requested is not sufficient to complete the order",
+        };
+      }
+
+      item.partPriceCents471 =
+        y_sup && x_sup && x_price && y_price
+          ? Math.min(x_price, y_price)
+          : x_price || y_price;
+
+      company = item.partPriceCents471 === x_price ? "X" : "Y";
+
+      newPartsMapping.push({
+        company,
         partPriceCents471: item.partPriceCents471,
+        priceOrdered471: item.partPriceCents471,
+        partNo471: item.partNo471,
         quantityOrdered471: item.quantityOrdered471,
-        priceOrdered471: item.quantityOrdered471 * item.partPriceCents471 * 100,
-      };
-    });
+      });
+    }
+
+    let createOrderBodyY: CreateOrderBody = {
+      clientId: 1, // Default for Company 'Z'
+      lineItems: [],
+    };
+
+    let createOrderBodyX: CreateOrderBody = {
+      clientId: 1, // Default for Company 'Z'
+      lineItems: [],
+    };
+
+    for (const lineItem of newPartsMapping) {
+      if (lineItem.company === "Y") {
+        createOrderBodyY.lineItems.push({
+          partNo471: lineItem.partNo471,
+          partPriceCents471: lineItem.partPriceCents471,
+          quantityOrdered471: lineItem.quantityOrdered471,
+        });
+      }
+
+      if (lineItem.company === "X") {
+        createOrderBodyX.lineItems.push({
+          partNo471: lineItem.partNo471,
+          partPriceCents471: lineItem.partPriceCents471,
+          quantityOrdered471: lineItem.quantityOrdered471,
+        });
+      }
+    }
+
+    if (createOrderBodyX.lineItems.length > 0) {
+      // create order in X
+      console.log("Order Request Object X: ", createOrderBodyX);
+
+      const response = await axios.post(
+        `${X_API_URL}/orders`,
+        createOrderBodyX,
+        {
+          headers: {
+            accept: "Application/json",
+            "content-type": "application/json",
+          },
+        }
+      );
+
+      console.log(response.data);
+
+      if (!response.data) {
+        return { error: "Something went wrong when creating order" };
+      }
+    }
+
+    if (createOrderBodyY.lineItems.length > 0) {
+      // create order in Y
+      console.log("Order Request Object Y: ", createOrderBodyY);
+
+      const response = await axios.post(
+        `${Y_API_URL}/orders`,
+        createOrderBodyY,
+        {
+          headers: {
+            accept: "Application/json",
+            "content-type": "application/json",
+          },
+        }
+      );
+
+      if (!response.data) {
+        return { error: "Something went wrong when creating order" };
+      }
+    }
+
+    const orderIdResponse = await generateUniqueOrderId();
+
+    // Create PO on table for Z
+    // Create Line Entry on table for Z along with company
+    // Generate data for each line item
+    const lineItems: ExtendedLineItem471[] = newPartsMapping.map(
+      (item, index) => {
+        return {
+          poNo471: orderIdResponse as string,
+          lineNum471: index + 1,
+          partNo471: item.partNo471,
+          partPriceCents471: item.partPriceCents471,
+          quantityOrdered471: item.quantityOrdered471,
+          priceOrdered471:
+            item.quantityOrdered471 * item.partPriceCents471 * 100,
+          company: item.company,
+        };
+      }
+    );
 
     // Insert new Purchase Order
-    let result = await supabase.from("order471").insert({
+    let result = await supabase.from("z_order471").insert({
       po_no471: orderIdResponse,
       client_id471: orderData.clientId,
       status471: "Active",
@@ -192,10 +270,10 @@ const createOrder = async (
     if (result.error) {
       return { error: "Internal Server Error" };
     }
-    // Insert Lines for each PO
 
+    // Insert Lines for each PO
     for (const item of lineItems) {
-      const { data, error } = await supabase.from("line471").insert([
+      const { data, error } = await supabase.from("x_line471").insert([
         {
           po_no471: item.poNo471,
           part_no471: item.partNo471,
@@ -203,36 +281,11 @@ const createOrder = async (
           price_ordered471: item.priceOrdered471,
           quantity_ordered471: item.quantityOrdered471,
           line_num471: item.lineNum471,
+          company: item.company,
         },
       ]);
 
       if (error) {
-        return { error: "Internal Server Error" };
-      }
-    }
-
-    // Update Part471 to decrease QOH
-    for (const item of lineItems) {
-      const qResult = await supabase
-        .from("part471")
-        .select("qoh471")
-        .ilike("part_no471", `%${item.partNo471}%`);
-
-      if (qResult.error) {
-        return { error: "Internal Server Error" };
-      }
-
-      if (qResult.data && qResult.data?.length > 0) {
-        const updateValue = qResult.data[0].qoh471 - item.quantityOrdered471;
-        const result = await supabase
-          .from("part471")
-          .update({ qoh471: updateValue })
-          .ilike("part_no471", `%${item.partNo471}%`);
-
-        if (result.error) {
-          return { error: "Internal Server Error" };
-        }
-      } else {
         return { error: "Internal Server Error" };
       }
     }
@@ -287,7 +340,7 @@ const getParts = async (): Promise<Part471[] | undefined> => {
 const getOrders = async (id: number): Promise<Order471[] | undefined> => {
   try {
     const { data } = await supabase
-      .from("order471")
+      .from("z_order471")
       .select()
       .match({ client_id471: id });
 
@@ -313,7 +366,7 @@ const getOrders = async (id: number): Promise<Order471[] | undefined> => {
  */
 const listOrders = async (): Promise<Order471[] | undefined> => {
   try {
-    const { data } = await supabase.from("order471").select();
+    const { data } = await supabase.from("z_order471").select();
 
     const result: Order471[] | undefined = data?.map((order) => {
       return {
@@ -337,7 +390,7 @@ const getLines = async (
   orderNumber: string
 ): Promise<Line471[] | undefined> => {
   try {
-    const { data } = await supabase.from("line471").select().match({
+    const { data } = await supabase.from("z_line471").select().match({
       po_no471: orderNumber?.toUpperCase(),
     });
 
