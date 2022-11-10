@@ -273,16 +273,23 @@ const createOrder = async (
 
     // Insert Lines for each PO
     for (const item of lineItems) {
-      const result = await supabase.from("z_part471").insert([
-        {
-          part_no471: item.partNo471,
-          qoh471: item.quantityOrdered471,
-          current_price_cents471: item.partPriceCents471 * 100,
-        },
-      ]);
+      const { count } = await supabase
+        .from("z_part471")
+        .select("*", { count: "exact" })
+        .match({ part_no471: item.partNo471 });
 
-      if (result.error) {
-        return { error: "While Insert parts" };
+      if (count === 0) {
+        const result = await supabase.from("z_part471").insert([
+          {
+            part_no471: item.partNo471,
+            qoh471: item.quantityOrdered471,
+            current_price_cents471: item.partPriceCents471 * 100,
+          },
+        ]);
+
+        if (result.error) {
+          return { error: "While Insert parts" };
+        }
       }
 
       const { data, error } = await supabase.from("z_line471").insert([
