@@ -273,7 +273,19 @@ const createOrder = async (
 
     // Insert Lines for each PO
     for (const item of lineItems) {
-      const { data, error } = await supabase.from("x_line471").insert([
+      const result = await supabase.from("z_part471").insert([
+        {
+          part_no471: item.partNo471,
+          qoh471: item.quantityOrdered471,
+          current_price_cents471: item.partPriceCents471 * 100,
+        },
+      ]);
+
+      if (result.error) {
+        return { error: "While Insert parts" };
+      }
+
+      const { data, error } = await supabase.from("z_line471").insert([
         {
           po_no471: item.poNo471,
           part_no471: item.partNo471,
