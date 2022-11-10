@@ -135,7 +135,6 @@ export default function PurchaseScreen() {
     }
 
     setCart(newArray);
-    console.log(cart);
     triggerAlert("success", "Part added to cart", "Success", 3000);
   };
 
