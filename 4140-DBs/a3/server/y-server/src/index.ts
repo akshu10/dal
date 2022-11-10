@@ -107,7 +107,7 @@ app.get(
  *      {
  *        "partNo471": "",
  *        "partPriceCents471": "",
-           "quantityOrdered471": ""
+          "quantityOrdered471": ""
  *      }
  *  ]
  * }
